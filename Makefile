@@ -1,23 +1,45 @@
+PACKAGE_NAME=jroutes
 SHELL=/bin/bash
-#export CHANGES = `git status -s -- src/jroutes | wc -l`
 CHANGES = $(shell git status -s -- src/jroutes | wc -l)
+PYTHONINT = $(shell which python3)
+WORKON_HOME=~/.virtualenv
+VENV_WRAPPER=/usr/share/virtualenvwrapper/virtualenvwrapper.sh
+
+venv:	
+	@. $(VENV_WRAPPER) && (workon $(PACKAGE_NAME) 2>/dev/null || mkvirtualenv -p $(PYTHONINT) $(PACKAGE_NAME))	
+	@pip install --extra-index-url https://test.pypi.org/simple -t $(WORKON_HOME)/$(PACKAGE_NAME)/lib/python3.9/site-packages -r requirements.txt 
 
 test:
-	gunicorn -b 0.0.0.0:9000 jroutes.serving:handler
+	gunicorn -b 0.0.0.0:9000 $(PACKAGE_NAME).serving:handler
 
 version:
+ifeq ($(CHANGES), 0)
+	standard-version
+else
+	@echo "No versioning today ($(CHANGES) changes)"
+endif
+
+version-dry:
 ifeq ($(CHANGES), 0)
 	standard-version --dry-run
 else
 	@echo "No versioning today ($(CHANGES) changes)"
 endif
 
-build:
-	python3 -m build 
+build: version
+	python3 -m build
 
-release: build 
+build-dry: version-dry
+
+release-test: build 
 	python3 -m twine upload --repository testpypi dist/*
+
+release-test-dry: build-dry
+
+install-test:
+	pip install -i https://test.pypi.org/simple/ $(PACKAGE_NAME)
 
 clean:
 	rm -rf dist 
 	rm -rf src/*.egg-info
+	find . -type d -name __pycache__ | xargs rm -rvf 

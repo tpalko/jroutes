@@ -16,6 +16,7 @@ classifiers = [
 
 [project.urls]
 "Homepage" = "https://github.com/tpalko/jroutes"
+"TestPyPI" = "https://test.pypi.org/project/jroutes"
 
 [build-system]
 requires = ["setuptools>=61.0"]

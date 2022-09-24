@@ -1,2 +1,6 @@
 dist/*
 jroutes.egg-info
+__pycache__
+*.log
+*.whl
+build/*
