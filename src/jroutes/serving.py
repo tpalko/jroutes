@@ -25,6 +25,7 @@ def handler(environ, start_response):
     response = { 'success': False, 'status_code': 500, 'server_message': '', 'response': None }
     body = ''
     headers = [('content-type', 'text/plain'),('Access-Control-Allow-Origin', '*')]
+    options_headers = [('content-type', 'text/plain'),]
     
     try:
 
@@ -33,24 +34,50 @@ def handler(environ, start_response):
         method = environ['REQUEST_METHOD']
         path = environ['PATH_INFO']
 
-        logger.debug(f'Handling {method} {path}')
+        if method == "OPTIONS":
 
-        thisRoute = lookup(method, path)
+            logger.debug(f'hey looky, we got us an options!')
+            
+            response['response'] = {
+                'success': True,
+                'message': "",
+                'data': {}
+            }
+            
+            HAC_method = environ['HTTP_ACCESS_CONTROL_REQUEST_METHOD'] # POST 
+            HAC_headers = environ['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'] # content-type
+            origin = environ['HTTP_ORIGIN'] # http://localhost:3000
+            options_headers.append(('Access-Control-Allow-Origin', origin))
+            options_headers.append(('Access-Control-Allow-Methods', HAC_method))
+            options_headers.append(('Access-Control-Allow-Headers', HAC_headers))
+            options_headers.append(('Access-Control-Max-Age', '86400'))
+            
+            response['success'] = True 
+            response['status_code'] = 204 
 
-        logger.debug(f'Found route!')
+            start_response('204 No Content', options_headers)
 
-        authorize(thisRoute)
+        else:
 
-        logger.debug('Authorized!')
-        
-        body, query = parse_request(environ)
+            logger.debug(f'Handling {method} {path}')
 
-        logger.debug(f'Entering route --- {method} {path}')
-        response['response'] = thisRoute['fn'](body, query)
-        response['success'] = True 
-        response['status_code'] = 200
+            thisRoute = lookup(method, path)
 
-        start_response('200 OK', headers)
+            logger.debug(f'Found route!')
+
+            authorize(thisRoute)
+
+            logger.debug('Authorized!')
+            
+            body, query = parse_request(environ)
+
+            logger.debug(f'Entering route --- {method} {path}')
+            response['response'] = thisRoute['fn'](body, query)
+
+            response['success'] = True 
+            response['status_code'] = 200
+
+            start_response('200 OK', headers)
 
     except UnauthorizedException as nae:
         start_response('401 unauthorized', headers)
