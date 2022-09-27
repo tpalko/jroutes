@@ -13,13 +13,10 @@ class UnauthorizedException(Exception):
 _routes = {}
 
 def _register(method, path, fn):
-    logger.warning('hey')
     if method not in _routes:
         _routes[method] = {}
     if path not in _routes[method]:
         _routes[method][path] = { 'fn': fn, 'authorize': [] }
-        logger.warning('hasdfjasdfhjasdf')
-        logger.warning(_routes)
 
 def lookup(method, path):
     if method in _routes:
@@ -133,7 +130,7 @@ def get(*args):
 
 def route(*args):
 
-    logger.warning(f'in route with')
+    logger.debug(f'in route with')
     logger.debug(args)
 
     method = args[1]

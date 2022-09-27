@@ -12,14 +12,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 route_modules = os.getenv('SERVER_ROUTE_MODULES')
-logger.warning(f'Route modules: {route_modules}')
+logger.debug(f'Route modules: {route_modules}')
 if route_modules:
     for module_name in [ m for m in route_modules.split(',') if m ]:
-        logger.warning(f'Importing routing module {module_name}')
+        logger.debug(f'Importing routing module {module_name}')
         importlib.import_module(module_name)
 
-logger.warning('umm')
-logger.warning(f'{json.dumps({ m: { p: { **_routes[m][p], "fn": _routes[m][p]["fn"].__name__ } for p in _routes[m] } for m in _routes }, indent=4)}')
+logger.info(f'{json.dumps({ m: { p: { **_routes[m][p], "fn": _routes[m][p]["fn"].__name__ } for p in _routes[m] } for m in _routes }, indent=4)}')
 
 def handler(environ, start_response):
     
