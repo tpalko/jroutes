@@ -143,6 +143,7 @@ def route(*args):
 
         logger.info(f'registering {method} {path} -> {chain[0].__name__}')
         _register(method, path, chain[0])
+        _register("OPTIONS", path, chain[0])
         return chain, method, path
 
     return wrapper

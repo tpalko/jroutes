@@ -24,7 +24,7 @@ def handler(environ, start_response):
     
     response = { 'success': False, 'status_code': 500, 'server_message': '', 'response': None }
     body = ''
-    headers = [('content-type', 'text/plain'),]
+    headers = [('content-type', 'text/plain'),('Access-Control-Allow-Origin', '*')]
     
     try:
 
