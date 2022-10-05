@@ -73,17 +73,18 @@ def handler(environ, start_response):
         start_response('401 unauthorized', headers)
         response['server_message'] = str(sys.exc_info()[1])
         response['status_code'] = 401
-        logger.error(response['server_message'])
+        logger.error(nae)
     except RouteNotFoundException as rnfe:
         start_response('404 not found', headers)
         response['server_message'] = str(sys.exc_info()[1])
         response['status_code'] = 404
-        logger.error(response['server_message'])
+        logger.error(rnfe)
     except:
         traceback.print_tb(sys.exc_info()[2])
         start_response('500 server error', headers)
         response['server_message'] = f'{sys.exc_info()[0].__name__}: {str(sys.exc_info()[1])}'
-        logger.error(response['server_message'])        
+        logger.error(sys.exc_info()[0])
+        logger.error(sys.exc_info()[1])
     finally:
         return [bytes(json.dumps(response), 'utf-8')]
 
