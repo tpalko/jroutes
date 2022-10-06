@@ -81,21 +81,22 @@ def handler(environ, start_response):
         start_response(f'{return_code} {return_code_message}', headers)
         response['server_message'] = str(sys.exc_info()[1])
         response['status_code'] = 401
-        logger.error(response['server_message'])
+        logger.error(nae)
     except RouteNotFoundException as rnfe:
         return_code = 404
         return_code_message = 'not found'
         start_response(f'{return_code} {return_code_message}', headers)
         response['server_message'] = str(sys.exc_info()[1])
         response['status_code'] = 404
-        logger.error(response['server_message'])
+        logger.error(rnfe)
     except:
         return_code = 500
         return_code_message = 'server error'
         start_response(f'{return_code} {return_code_message}', headers)
         traceback.print_tb(sys.exc_info()[2])
         response['server_message'] = f'{sys.exc_info()[0].__name__}: {str(sys.exc_info()[1])}'
-        logger.error(response['server_message'])        
+        logger.error(sys.exc_info()[0])
+        logger.error(sys.exc_info()[1])
     finally:
         response_str = json.dumps(response)
         logger.info(f'{method} {path} {return_code} {len(response_str)}')        
