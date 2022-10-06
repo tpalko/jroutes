@@ -11,11 +11,14 @@ logger = logging.getLogger(__name__)
 
 def handler(environ, start_response):
     
-    response = { 'success': False, 'status_code': 500, 'server_message': '', 'response': None }
+    return_code = 500
+    return_code_message = ''
+
+    response = { 'success': False, 'status_code': return_code, 'server_message': '', 'response': None }
     body = ''
     headers = [('content-type', 'text/plain'),('Access-Control-Allow-Origin', '*')]
     options_headers = [('content-type', 'text/plain'),]
-    
+
     try:
 
         logger.debug(",".join([ f'{k}: {v}' for k,v in environ.items() ]))
@@ -63,29 +66,40 @@ def handler(environ, start_response):
             logger.debug(f'Entering route --- {method} {path}')
             response['response'] = thisRoute['fn'](body, query)
 
-
             response['success'] = True 
-            response['status_code'] = 200
+            
+            return_code = 200
+            return_code_message = 'OK'
 
-            start_response('200 OK', headers)
+            response['status_code'] = return_code
 
+            start_response(f'{return_code} {return_code_message}', headers)
+            
     except UnauthorizedException as nae:
-        start_response('401 unauthorized', headers)
+        return_code = 401
+        return_code_message = 'unauthorized'
+        start_response(f'{return_code} {return_code_message}', headers)
         response['server_message'] = str(sys.exc_info()[1])
         response['status_code'] = 401
         logger.error(response['server_message'])
     except RouteNotFoundException as rnfe:
-        start_response('404 not found', headers)
+        return_code = 404
+        return_code_message = 'not found'
+        start_response(f'{return_code} {return_code_message}', headers)
         response['server_message'] = str(sys.exc_info()[1])
         response['status_code'] = 404
         logger.error(response['server_message'])
     except:
+        return_code = 500
+        return_code_message = 'server error'
+        start_response(f'{return_code} {return_code_message}', headers)
         traceback.print_tb(sys.exc_info()[2])
-        start_response('500 server error', headers)
         response['server_message'] = f'{sys.exc_info()[0].__name__}: {str(sys.exc_info()[1])}'
         logger.error(response['server_message'])        
     finally:
-        return [bytes(json.dumps(response), 'utf-8')]
+        response_str = json.dumps(response)
+        logger.info(f'{method} {path} {return_code} {len(response_str)}')        
+        return [bytes(response_str, 'utf-8')]
 
 class JroutesApplication(BaseApplication):
     

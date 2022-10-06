@@ -29,7 +29,8 @@ if __name__ == "__main__":
 
     # -- if executed directly, we use our gunicorn BaseApplication implementation
     from .serving import JroutesApplication
-    JroutesApplication({'bind': '0.0.0.0:9001', 'workers': 1}).run()
+    port = os.getenv('PORT', 8000)
+    JroutesApplication({'bind': f'0.0.0.0:{port}', 'workers': 1}).run()
 
 else:
 
