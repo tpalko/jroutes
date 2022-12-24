@@ -98,13 +98,15 @@ def handler(environ, start_response):
         logger.error(sys.exc_info()[0])
         logger.error(sys.exc_info()[1])
     finally:
-        response_str = json.dumps(response)
+        logger.debug(response)
+        response_str = json.dumps(response)        
         logger.info(f'{method} {path} {return_code} {len(response_str)}')        
         return [bytes(response_str, 'utf-8')]
 
 class JroutesApplication(BaseApplication):
     
     def __init__(self, options=None):
+        # -- options here is a dict with 'bind' and 'workers'
         self.options = options or {}
         self.application = handler
         super().__init__()

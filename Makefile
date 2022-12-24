@@ -1,16 +1,16 @@
 PACKAGE_NAME=jroutes
-SHELL=/bin/bash
-CHANGES = $(shell git status -s -- src/jroutes | wc -l)
-PYTHONINT = $(shell which python3)
-WORKON_HOME=~/.virtualenv
-VENV_WRAPPER=/usr/share/virtualenvwrapper/virtualenvwrapper.sh
+SHELL := /bin/bash
+CHANGES := $(shell git status -s -- src/jroutes | wc -l)
+PYTHONINT := $(shell which python3)
+# WORKON_HOME=~/.virtualenv
+VENV_WRAPPER := /usr/share/virtualenvwrapper/virtualenvwrapper.sh
 
 venv:	
 	@. $(VENV_WRAPPER) && (workon $(PACKAGE_NAME) 2>/dev/null || mkvirtualenv -p $(PYTHONINT) $(PACKAGE_NAME))	
 	@pip install --extra-index-url https://test.pypi.org/simple -t $(WORKON_HOME)/$(PACKAGE_NAME)/lib/python3.9/site-packages -r requirements.txt 
 
 test:
-	gunicorn -b 0.0.0.0:9000 $(PACKAGE_NAME).serving:handler
+	PYTHONPATH=${PWD} SERVER_ROUTE_MODULES=tests.routes python3 -m src.${PACKAGE_NAME}.serve 	
 
 version:
 ifeq ($(CHANGES), 0)
