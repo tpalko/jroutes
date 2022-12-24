@@ -1,5 +1,6 @@
 import json 
 import base64
+import re 
 
 import logging
 logger = logging.getLogger(__name__)
@@ -12,17 +13,61 @@ class UnauthorizedException(Exception):
 
 _routes = {}
 
+def response(success=False, message='', data={}):
+
+    return {
+        'success': success,
+        'message': message,
+        'data': data 
+    }
+
+# -- path /widget/{id}/suffer
+# -- needs to be 
+# -- path /widget/(?P<id>\w)/suffer + parameters ['id']
+def _path_parameters(matchobj):    
+    parameter = f'(?P<{matchobj.group(1)}>\w+)'
+    logger.debug(f'substituting {matchobj.group(1)} -> {parameter}')
+    return parameter
+
 def _register(method, path, fn):
     if method not in _routes:
         _routes[method] = {}
-    if path not in _routes[method]:
-        _routes[method][path] = { 'fn': fn, 'authorize': [] }
+    
+    parameter_path = re.sub('{(\w+)}', _path_parameters, path)
+    if parameter_path not in _routes[method]:
+       
+        # -- for request_path /widget/666/suffer        
+        # -- re.match(parameter_path, request_path)
+        # -- returns
+        # -- match obj: <> + {'id': '666'}
+        # -- for fn(**{'id': '666'})        
+        
+        parameters = re.findall('{(\w+)}', path)
+        _routes[method][parameter_path] = { 'fn': fn, 'parameters': parameters, 'original_path': path, 'authorize': [] }
 
-def lookup(method, path):
+def lookup(method, request_path):
+    found_route = None 
+    parameters = {}
     if method in _routes:
-        if path in _routes[method]:
-            return _routes[method][path]
-    raise RouteNotFoundException(f'{method} {path} not found')
+        # -- simple path, no parameters
+        if request_path in _routes[method]:
+            found_route = _routes[method][request_path]
+        # -- may have parameters
+        # -- look through all paths for our method
+        elif method in _routes:                
+            for path in _routes[method]:
+                logger.debug(f're.match {path} {request_path}')                
+                matchobj = re.match(path, request_path)
+                # -- any matches are parameters
+                if matchobj:
+                    found_route = _routes[method][path]
+                    parameters = matchobj.groupdict()
+                    break 
+    if found_route:
+        logger.debug(f'matched route {route} with parameters {parameters}')
+        return (found_route, parameters,)
+                
+    raise RouteNotFoundException(f'{method} {request_path} not found')
 
 def wrap(method, path, wrappingFn):
     if method in _routes:

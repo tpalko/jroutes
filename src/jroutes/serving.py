@@ -53,7 +53,7 @@ def handler(environ, start_response):
 
             logger.debug(f'Handling {method} {path}')
 
-            thisRoute = lookup(method, path)
+            thisRoute, parameters = lookup(method, path)
 
             logger.debug(f'Found route!')
 
@@ -64,7 +64,7 @@ def handler(environ, start_response):
             body, query = parse_request(environ)
 
             logger.debug(f'Entering route --- {method} {path}')
-            response['response'] = thisRoute['fn'](body, query)
+            response['response'] = thisRoute['fn'](body, query, **parameters)
 
             response['success'] = True 
             
