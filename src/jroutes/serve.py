@@ -40,10 +40,10 @@ if __name__ == "__main__":
     # -- and maybe adds custom formatting fields
     # -- because maybe, just may be..
     from .routing import _routes 
-    import logging 
+    import cowpy 
     import json 
 
-    logger = logging.getLogger('jroutes')
+    logger = cowpy.getLogger()
     logger.info(f'{json.dumps({ m: { p: { **_routes[m][p], "fn": _routes[m][p]["fn"].__name__ } for p in _routes[m] } for m in _routes }, indent=4)}')
 
     # -- if executed directly, we use our gunicorn BaseApplication implementation
@@ -65,3 +65,7 @@ else:
     # -- if imported by gunicorn.app.wsgiapp
     # -- give it what it wants 
     from .serving import handler as application 
+
+    import cowpy
+    logger = cowpy.getLogger()
+    logger.info("application is available")

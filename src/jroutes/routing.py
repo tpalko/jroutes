@@ -1,9 +1,9 @@
 import json 
 import base64
 import re 
+import cowpy 
 
-import logging
-logger = logging.getLogger(__name__)
+logger = cowpy.getLogger()
 
 class RouteNotFoundException(Exception):
     pass 

@@ -1,13 +1,24 @@
 #!/usr/bin/env python3
 
+import cowpy
 import json
 import traceback 
 import sys 
-import logging
 from gunicorn.app.base import BaseApplication
 from .routing import parse_request, authorize, lookup, authorize, UnauthorizedException, RouteNotFoundException
 
-logger = logging.getLogger(__name__)
+logger = cowpy.getLogger()
+
+class JText(object):
+
+    context = None 
+    body = None 
+    query = None 
+    params = None 
+
+    def __init__(self, *args, **kwargs):
+        for k in kwargs:
+            self.__setattr__(k, kwargs[k])
 
 def handler(environ, start_response):
     
@@ -21,7 +32,7 @@ def handler(environ, start_response):
 
     try:
 
-        logger.debug(",".join([ f'{k}: {v}' for k,v in environ.items() ]))
+        # logger.debug(",".join([ f'{k}: {v}' for k,v in environ.items() ]))
 
         method = environ['REQUEST_METHOD']
         path = environ['PATH_INFO']
@@ -81,34 +92,40 @@ def handler(environ, start_response):
         start_response(f'{return_code} {return_code_message}', headers)
         response['server_message'] = str(sys.exc_info()[1])
         response['status_code'] = 401
-        logger.error(nae)
+        logger.exception()
     except RouteNotFoundException as rnfe:
         return_code = 404
         return_code_message = 'not found'
         start_response(f'{return_code} {return_code_message}', headers)
         response['server_message'] = str(sys.exc_info()[1])
         response['status_code'] = 404
-        logger.error(rnfe)
+        logger.exception()
     except:
         return_code = 500
         return_code_message = 'server error'
         start_response(f'{return_code} {return_code_message}', headers)
-        traceback.print_tb(sys.exc_info()[2])
         response['server_message'] = f'{sys.exc_info()[0].__name__}: {str(sys.exc_info()[1])}'
-        logger.error(sys.exc_info()[0])
-        logger.error(sys.exc_info()[1])
+        logger.exception()
     finally:
         logger.debug(response)
-        response_str = json.dumps(response)        
+        response_str = json.dumps(response)
         logger.info(f'{method} {path} {return_code} {len(response_str)}')        
         return [bytes(response_str, 'utf-8')]
 
 class JroutesApplication(BaseApplication):
     
+    logger = None 
+    
     def __init__(self, options=None):
+
+        self.logger = cowpy.getLogger()
+
         # -- options here is a dict with 'bind' and 'workers'
         self.options = options or {}
         self.application = handler
+
+        self.logger.info(f'Set application: {handler}')
+        
         super().__init__()
 
     def load_config(self):
