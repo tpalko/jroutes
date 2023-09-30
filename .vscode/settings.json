@@ -1,0 +1,3 @@
+{
+    "python.defaultInterpreterPath": "~/.virtualenvs/${workspaceFolder}/bin/python"
+}

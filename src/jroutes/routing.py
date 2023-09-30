@@ -12,8 +12,9 @@ class UnauthorizedException(Exception):
     pass 
 
 _routes = {}
+_context = []
 
-def response(success=False, message='', data={}):
+def base_response(success=False, message='', data={}):
 
     return {
         'success': success,
@@ -43,7 +44,12 @@ def _register(method, path, fn):
         # -- for fn(**{'id': '666'})        
         
         parameters = re.findall('{(\w+)}', path)
-        _routes[method][parameter_path] = { 'fn': fn, 'parameters': parameters, 'original_path': path, 'authorize': [] }
+        _routes[method][parameter_path] = { 
+            'fn': fn, 
+            'parameters': parameters, 
+            'original_path': path, 
+            'authorize': [] 
+        }
 
 def lookup(method, request_path):
     found_route = None 
@@ -78,6 +84,9 @@ def wrap(method, path, wrappingFn):
             return 
     logger.warn(f'{method} {path} was not found as registered, could not wrap')
 
+def get_context():
+    return _context 
+
 def parse_request(environ):
     body = environ['wsgi.input'].readline().decode('utf-8')
     logger.debug(f'Request body: {body}')
@@ -90,7 +99,7 @@ def parse_request(environ):
 
     if query:
         logger.debug(f'Processing query content')
-        query = [ tuple(p.split('=')) for p in query.split('&') ]
+        query = dict([ tuple(p.split('=')) for p in query.split('&') ])
 
     return body, query 
 
@@ -146,26 +155,37 @@ def authorize(*args):
 
     username = args[0]
 
-    def wrapper(*funcTup):
+    def wrapper(funcTup):
     
         logger.debug('in authorize wrapper with')
         logger.debug(funcTup)
-    
-        method = funcTup[0][1]
-        path = funcTup[0][2]
+        
+        method = funcTup[1]
+        path = funcTup[2]
         thisRoute = lookup(method, path)
         if thisRoute:
             logger.debug(f'restricting {method} {path} to {username}')
-            thisRoute['authorize'].append(username)
+            thisRoute[0]['authorize'].append(username)
         else:
             logger.warning(f'{method} {path} is not a registered route. cannot restrict with authorization')
-        return funcTup
+        
+        return funcTup[0], funcTup[1], funcTup[2]
         
     return wrapper 
 
 
 # def any(*args):
 #     return route(args[0])
+
+def context(*args):
+    
+    logger.debug("in context!!")
+    def wrapper(fn):
+        logger.debug("in context wrapper!")
+        _context.append(fn)
+        return fn 
+
+    return wrapper 
 
 def post(*args):
     return route(args[0], 'POST')
@@ -181,16 +201,19 @@ def route(*args):
     method = args[1]
     path = args[0]
 
-    def wrapper(*chain):
+    def wrapper(fn):
 
         logger.debug('in route wrapper with')
-        logger.debug(chain)
+        logger.debug(fn)
 
-        logger.info(f'registering {method} {path} -> {chain[0].__name__}')
-        _register(method, path, chain[0])
-        return chain, method, path
+        logger.info(f'registering {method} {path} -> {fn.__name__}')
+        _register(method, path, fn)
+        return fn, method, path
 
     return wrapper
 
 def JsonResponse(obj):
     return json.dumps(obj) #, [('content-type', 'application/json'),]
+
+if __name__ == "__main__":
+    print('hey')

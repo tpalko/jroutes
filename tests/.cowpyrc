@@ -1,0 +1,17 @@
+{
+    'version': 1,
+    'disable_existing_loggers': False,    
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG'
+        },
+    },
+    'loggers': {    
+        'routes': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        }
+    }
+}

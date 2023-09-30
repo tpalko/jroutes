@@ -5,7 +5,8 @@ import json
 import traceback 
 import sys 
 from gunicorn.app.base import BaseApplication
-from .routing import parse_request, authorize, lookup, authorize, UnauthorizedException, RouteNotFoundException
+from gunicorn.config import Config 
+from .routing import parse_request, get_context, authorize, lookup, authorize, UnauthorizedException, RouteNotFoundException
 
 logger = cowpy.getLogger()
 
@@ -73,9 +74,24 @@ def handler(environ, start_response):
             logger.debug('Authorized!')
             
             body, query = parse_request(environ)
+            context = get_context()
+
+            context_body = {}
+            for c in context:
+                def cb(_body):
+                    context_body.update(_body)
+                c(context_body, cb)
 
             logger.debug(f'Entering route --- {method} {path}')
-            response['response'] = thisRoute['fn'](body, query, **parameters)
+
+            # response['response'] = thisRoute['fn'](JText(
+            #     context=context_body, 
+            #     body=body, 
+            #     query=query, 
+            #     params={ **parameters }
+            # ))
+
+            response['response'] = thisRoute['fn'](body=body, query=query, **parameters)
 
             response['success'] = True 
             

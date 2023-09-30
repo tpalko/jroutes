@@ -9,9 +9,6 @@ def process_modules(route_modules):
             # logger.debug(f'Importing routing module {module_name}')
             importlib.import_module(module_name)
 
-
-
-
 route_modules = os.getenv('SERVER_ROUTE_MODULES')
 port = int(os.getenv('JROUTES_LISTEN_PORT', 8000))
 host = os.getenv('JROUTES_LISTEN_HOST', '0.0.0.0')
@@ -53,10 +50,17 @@ if __name__ == "__main__":
         'bind': f'{host}:{port}', 
         'workers': workers,
         'keyfile': keyfile,
-        'certfile': certfile
+        'certfile': certfile,
+        # 'print_config': False,
+        # 'logging_class': cowpy.CowpyGunicorn
     }
 
-    JroutesApplication(gunicorn_settings).run()
+    logger.debug(gunicorn_settings)
+
+    japp = JroutesApplication(gunicorn_settings)
+
+    logger.info(f'Starting JroutesApplication')
+    japp.run()
 
 else:
 
